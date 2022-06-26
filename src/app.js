@@ -27,16 +27,22 @@ mongoClient.connect(() => {
     db = mongoClient.db("chat_UOL");
 });
 
-function kickInactiveUsers() {
+async function kickInactiveUsers() {
     const tenSecondsAgo = Date.now() - 10*1000;
-    try {
-        db.collection('participants').deleteMany({lastStatus: {$lt: tenSecondsAgo}});
-    }
-    catch(error) {
-        console.log(error);
-    }
+    const inactiveUsers = await db.collection('participants').find({lastStatus: {$lt: tenSecondsAgo}}).toArray();
+    await db.collection('participants').deleteMany({lastStatus: {$lt: tenSecondsAgo}});
+    inactiveUsers.map(user => {
+        db.collection('messages').insertOne({
+            from: user.name,
+            to: 'Todos',
+            text: 'sai na sala...',
+            type: 'status',
+            time: dayjs(Date.now()).format('HH:mm:ss')
+        });
+    })
 }
 
+//kickInactiveUsers();
 setInterval(kickInactiveUsers, 15*1000);
 
 server.post('/participants', async (req, res) => {
@@ -65,7 +71,7 @@ server.post('/participants', async (req, res) => {
             text: 'entra na sala...',
             type: 'status',
             time: dayjs(insertedUser.lastStatus).format('HH:mm:ss')
-        })
+        });
         res.sendStatus(201);
     }
     catch(error) {
