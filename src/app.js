@@ -3,6 +3,7 @@ import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import joi from 'joi';
+import dayjs from 'dayjs';
 
 dotenv.config();
 
@@ -37,7 +38,7 @@ server.post('/participants', async (req, res) => {
         res.sendStatus(422);
         return;
     }
-    
+
     const userAlreadyExists = await db.collection('participants').findOne(userName);
     if(userAlreadyExists) {
         console.log("Esse nome de usuário já está sendo utilizado!");
@@ -46,7 +47,15 @@ server.post('/participants', async (req, res) => {
     }
 
     try {
-        await db.collection('participants').insertOne({...userName, lastStatus: Date.now()});
+        const insertUser = await db.collection('participants').insertOne({...userName, lastStatus: Date.now()});
+        const insertedUser = await db.collection('participants').findOne({_id: insertUser.insertedId});
+        await db.collection('messages').insertOne({
+            from: insertedUser.name,
+            to: 'Todos',
+            text: 'entra na sala...',
+            type: 'status',
+            time: dayjs(insertedUser.lastStatus).format('HH:mm:ss')
+        })
         res.sendStatus(201);
     }
     catch(error) {
@@ -62,6 +71,15 @@ server.get('/participants', async (req, res) => {
     catch(error) {
         res.sendStatus(422);
     }
-})
+});
 
+server.get('/messages', async (req, res) => {
+    try {
+        const messages = await db.collection('messages').find().toArray();
+        res.send(messages);
+    }
+    catch(error) {
+        res.sendStatus(422);
+    }
+});
 server.listen(5000);
