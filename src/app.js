@@ -74,12 +74,17 @@ server.get('/participants', async (req, res) => {
 });
 
 server.get('/messages', async (req, res) => {
+    let limit;
+    req.query.limit ? limit = parseInt(req.query.limit) : limit = 0;
+    
+
     try {
-        const messages = await db.collection('messages').find().toArray();
+        const messages = await db.collection('messages').find().limit(limit).toArray();
         res.send(messages);
     }
     catch(error) {
         res.sendStatus(422);
     }
 });
+
 server.listen(5000);
