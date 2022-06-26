@@ -27,6 +27,18 @@ mongoClient.connect(() => {
     db = mongoClient.db("chat_UOL");
 });
 
+function kickInactiveUsers() {
+    const tenSecondsAgo = Date.now() - 10*1000;
+    try {
+        db.collection('participants').deleteMany({lastStatus: {$lt: tenSecondsAgo}});
+    }
+    catch(error) {
+        console.log(error);
+    }
+}
+
+setInterval(kickInactiveUsers, 15*1000);
+
 server.post('/participants', async (req, res) => {
     const userName = req.body;
     const validation = userSchema.validate(userName);
