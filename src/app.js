@@ -12,11 +12,9 @@ const userSchema = joi.object({
 });
 
 const messageSchema = joi.object({
-    from: joi.string().required(),
     to: joi.string().required(),
     text: joi.string().required(),
-    type: joi.string().required(),
-    time: joi.string().required()
+    type: joi.string().valid('message','private_message').required(),
 })
 
 const server = express();
@@ -85,6 +83,31 @@ server.get('/messages', async (req, res) => {
     catch(error) {
         res.sendStatus(422);
     }
+});
+
+server.post('/messages', async (req, res) => {
+    const newMessage = req.body;
+    const validation = messageSchema.validate(newMessage);
+    const user = req.headers.user;
+    const isValidUser = await db.collection('participants').findOne({name: user});
+
+    if(validation.error) {
+        console.log(validation.error.details);
+        res.sendStatus(422);
+        return;
+    }
+    if(!isValidUser) {
+        res.sendStatus(422);
+        return;
+    }
+    try {
+        const insertMessage = await db.collection('messages').insertOne({...newMessage, from: user, time: dayjs(Date.now()).format('HH:mm:ss')});
+        res.sendStatus(201);
+    }
+    catch(error) {
+        res.sendStatus(500);
+    }
+
 });
 
 server.listen(5000);
