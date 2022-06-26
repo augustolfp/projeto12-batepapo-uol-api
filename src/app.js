@@ -110,4 +110,21 @@ server.post('/messages', async (req, res) => {
 
 });
 
+server.post('/status', async (req, res) => {
+    const user = req.headers.user;
+    const isValidUser = await db.collection('participants').findOne({name: user});
+
+    if(!isValidUser) {
+        res.sendStatus(404);
+        return;
+    }
+    try {
+        await db.collection('participants').updateOne({name: user}, {$set: {lastStatus: Date.now()}});
+        res.sendStatus(200);
+    }
+    catch(error) {
+        res.sendStatus(500);
+    }
+})
+
 server.listen(5000);
