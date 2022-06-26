@@ -79,7 +79,7 @@ server.get('/messages', async (req, res) => {
     
 
     try {
-        const messages = await db.collection('messages').find().limit(limit).toArray();
+        const messages = await db.collection('messages').find().sort({_id:-1}).limit(limit).toArray();
         res.send(messages);
     }
     catch(error) {
