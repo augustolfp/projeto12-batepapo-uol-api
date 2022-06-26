@@ -5,8 +5,7 @@ import joi from 'joi';
 dotenv.config();
 
 const userSchema = joi.object({
-    name: joi.string().required(),
-    lastStatus: joi.number().integer().required()
+    name: joi.string().min(1).required()
 });
 
 const messageSchema = joi.object({
@@ -18,7 +17,6 @@ const messageSchema = joi.object({
 })
 
 import { MongoClient } from 'mongodb';
-import { appendFile } from 'fs';
 
 const server = express();
 server.use(cors());
@@ -29,5 +27,17 @@ const mongoClient = new MongoClient(process.env.MONGO_URI);
 mongoClient.connect(() => {
     db = mongoClient.db('chat_UOL');
 });
+
+server.post('/participants', async (req, res) => {
+    const userName = req.body;
+    try {
+        await db.collection('participants').insertOne({...userName, lastStatus: Date.now()});
+        res.sendStatus(201);
+    }
+    catch (error) {
+        res.sendStatus(500);
+    }
+});
+
 
 server.listen(5000);
