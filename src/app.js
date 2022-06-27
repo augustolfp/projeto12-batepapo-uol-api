@@ -57,7 +57,6 @@ server.post('/participants', async (req, res) => {
 
     const userAlreadyExists = await db.collection('participants').findOne(userName);
     if(userAlreadyExists) {
-        console.log("Esse nome de usuário já está sendo utilizado!");
         res.sendStatus(409);
         return;
     }
@@ -92,10 +91,37 @@ server.get('/participants', async (req, res) => {
 server.get('/messages', async (req, res) => {
     let limit;
     req.query.limit ? limit = parseInt(req.query.limit) : limit = 0;
+    const user = req.headers.user;
     
 
     try {
-        const messages = await db.collection('messages').find().sort({_id:-1}).limit(limit).toArray();
+        const messages = await db.collection('messages').find({
+            $or: [
+                {
+                    type: 'message'
+                },
+                {
+                    type: 'status'
+                },
+                {
+                    $and: [
+                        {
+                            type: 'private_message'
+                        },
+                        {
+                            $or: [
+                                {
+                                    from: user
+                                },
+                                {
+                                    to: user
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }).sort({_id:-1}).limit(limit).toArray();
         res.send(messages.reverse());
     }
     catch(error) {
