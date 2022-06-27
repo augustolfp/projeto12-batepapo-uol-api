@@ -162,6 +162,29 @@ server.post('/messages', async (req, res) => {
 
 });
 
+server.delete('/messages/:id', async (req, res) => {
+    const id = req.params.id;
+    const user = req.headers.user;
+
+    const selectedMessage = await db.collection('messages').findOne({_id: ObjectId(id)});
+    if(!selectedMessage) {
+        res.sendStatus(404);
+        return;
+    }
+    if(selectedMessage.from != user) {
+        res.sendStatus(401);
+        return;
+    }
+
+    try {
+        await db.collection('messages').deleteOne({_id: ObjectId(id)});
+        res.sendStatus(200);
+    }
+    catch(error) {
+        res.sendStatus(500);
+    }
+});
+
 server.post('/status', async (req, res) => {
     const user = req.headers.user;
     const isValidUser = await db.collection('participants').findOne({name: user});
