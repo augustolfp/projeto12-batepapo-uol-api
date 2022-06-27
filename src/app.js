@@ -134,7 +134,11 @@ server.get('/messages', async (req, res) => {
 });
 
 server.post('/messages', async (req, res) => {
-    const newMessage = req.body;
+    const newMessage = {
+        to: stripHtml(req.body.to).result.trim(),
+        text: stripHtml(req.body.text).result.trim(),
+        type: stripHtml(req.body.type).result.trim()
+    }
     const validation = messageSchema.validate(newMessage);
     const user = req.headers.user;
     const isValidUser = await db.collection('participants').findOne({name: user});
