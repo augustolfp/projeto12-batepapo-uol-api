@@ -96,7 +96,7 @@ server.get('/messages', async (req, res) => {
 
     try {
         const messages = await db.collection('messages').find().sort({_id:-1}).limit(limit).toArray();
-        res.send(messages);
+        res.send(messages.reverse());
     }
     catch(error) {
         res.sendStatus(422);
