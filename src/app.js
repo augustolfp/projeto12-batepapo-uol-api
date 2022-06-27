@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import joi from 'joi';
 import dayjs from 'dayjs';
-
+import { strict as assert } from "assert";
+import { stripHtml } from "string-strip-html";
+assert.equal(stripHtml(`aaa<div>bbb</div>ccc`).result, `aaa bbb ccc`);
 dotenv.config();
 
 const userSchema = joi.object({
@@ -46,7 +48,9 @@ async function kickInactiveUsers() {
 setInterval(kickInactiveUsers, 15*1000);
 
 server.post('/participants', async (req, res) => {
-    const userName = req.body;
+    const userName = {
+        name: stripHtml(req.body.name).result.trim()
+    };
     const validation = userSchema.validate(userName);
 
     if(validation.error) {
